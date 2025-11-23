@@ -60,13 +60,12 @@
                  (swap! app-state assoc :input-text ""))} ;; Limpa o input
     "Adicionar"]])
 
-(defn todo-list [] ;; <-- Argumento "todos" REMOVIDO
+(defn todo-list []
   [:ul.todo-list
-   ;; (Leitura): O 'for' agora observa o @app-state
    (for [todo (:todos @app-state)]
-     ^{:key (:id todo)}
+     ^{:key (:todos/id todo)} ;; <-- CORRIGIDO
      [:li.todo-item
-      (:title todo)])])
+      (:todos/title todo)])]) ;; <-- CORRIGIDO
 
 (defn app []
   [:div.todo-app

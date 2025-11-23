@@ -5,7 +5,8 @@
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.cors :refer [wrap-cors]]
-            [todo.backend.handler :as handler])  ;; 3. Nossas funções (handler.clj)
+            [todo.backend.handler :as handler]
+            [todo.backend.db :as db])  ;; 3. Nossas funções (handler.clj)
   
   ;; 4. IMPORTANTE: Para o 'clj -M:run' funcionar
   (:gen-class)) 
@@ -25,30 +26,20 @@
       :post {:handler handler/create-todo-handler}}]] ;; POST chama 'create'
    ))
 
-;; --- 2. Definição da Aplicação (App) ---
-;; Criamos o 'app' final, que é a função Ring principal.
 (def app
   (ring/ring-handler
-   app-routes ;; Nossas rotas
-   (ring/create-default-handler) ;; Um handler padrão para 404 (Not Found)
-   
-   ;; --- ADICIONE ESTE MAPA DE OPÇÕES ---
-   {:middleware [;; 1. Converte a *resposta* (nosso mapa) em JSON
-                [wrap-cors :access-control-allow-origin [#"http://localhost:8000"]
-                      :access-control-allow-methods [:get :post :put :delete]]
+   app-routes
+   (ring/create-default-handler)
+   {:middleware [;; --- ADICIONE ESTE VETOR ---
+                 ;; Ele deve ser o primeiro da lista
+                 [wrap-cors :access-control-allow-origin [#"http://localhost:8000"]
+                            :access-control-allow-methods [:get :post :put :delete]]
 
+                 ;; O resto dos middlewares...
                  wrap-json-response
-                 
-                 ;; 2. Converte o *corpo* da requisição (JSON) 
-                 ;;    e o coloca em :body
                  [wrap-json-body {:keywords? true}]
-                 
-                 ;; 3. Converte chaves de string "foo" para :keywords :foo
-                 ;;    (Necessário para o wrap-json-body)
-                 wrap-keyword-params
-                 
-                 ;; 4. Habilita a leitura de parâmetros de URL (ex: /user?id=1)
                  wrap-params
+                 wrap-keyword-params
                 ]}))
 
 ;; --- 3. Função para Iniciar o Servidor ---
@@ -61,8 +52,10 @@
 
 ;; --- 4. Ponto de Entrada Principal (-main) ---
 ;; Esta é a função que o alias :run (do deps.edn) procura.
+;; CÓDIGO CORRIGIDO
 (defn -main [& args]
-  ;; Permite que a porta seja passada como argumento (ex: clj -M:run 8080)
-  ;; ou usa "3000" como padrão.
   (let [port (Integer/parseInt (or (first args) "3000"))]
+    ;; --- ADICIONE ESTA LINHA ---
+    (db/initialize-database!) ;; Garante que a tabela exista
+    ;; --------------------------
     (start-server port)))
