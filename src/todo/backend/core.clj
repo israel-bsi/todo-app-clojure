@@ -4,6 +4,7 @@
             [ring.middleware.json :refer [wrap-json-response wrap-json-body]]
             [ring.middleware.keyword-params :refer [wrap-keyword-params]]
             [ring.middleware.params :refer [wrap-params]]
+            [ring.middleware.cors :refer [wrap-cors]]
             [todo.backend.handler :as handler])  ;; 3. Nossas funções (handler.clj)
   
   ;; 4. IMPORTANTE: Para o 'clj -M:run' funcionar
@@ -33,6 +34,9 @@
    
    ;; --- ADICIONE ESTE MAPA DE OPÇÕES ---
    {:middleware [;; 1. Converte a *resposta* (nosso mapa) em JSON
+                [wrap-cors :access-control-allow-origin [#"http://localhost:8000"]
+                      :access-control-allow-methods [:get :post :put :delete]]
+
                  wrap-json-response
                  
                  ;; 2. Converte o *corpo* da requisição (JSON) 
