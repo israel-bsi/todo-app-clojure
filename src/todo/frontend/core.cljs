@@ -5,7 +5,6 @@
             [cljs.core.async :refer [go]]
             [cljs.core.async.interop :refer-macros [<p!]]))
 
-;; --- 1. Adicione este "Cérebro" Reativo ---
 (defonce app-state (r/atom {:next-id 1
                             :input-text ""
                             :todos []}))
@@ -18,10 +17,8 @@
                (when-not (.-ok response)
                  (throw (js/Error. (str "HTTP error: " (.-status response)))))
                (.json response)))
-      ;; A CORREÇÃO ESTÁ AQUI:
       (.then #(js->clj % :keywordize-keys true))))
 
-;; Busca todos os "todos" da API
 (defn get-todos []
   (swap! app-state assoc :loading true :error nil)
   (go
@@ -38,10 +35,8 @@
       (<p! (fetch-json (str api-url "/todos")
                        {:method "POST"
                         :headers {"Content-Type" "application/json"}
-                        ;; Converte o mapa Clojure em uma string JSON
                         :body (js/JSON.stringify (clj->js todo-data))}))
 
-      ;; Se o POST funcionou, recarregamos a lista
       (get-todos)
       (catch js/Error e
         (swap! app-state assoc :error (.-message e) :loading false)))))
@@ -53,7 +48,6 @@
     (try
       (<p! (fetch-json (str api-url "/todos/" id "/toggle")
                        {:method "POST"}))
-      ;; Se funcionou, apenas recarregue a lista inteira
       (get-todos)
       (catch js/Error e
         (swap! app-state assoc :error (.-message e) :loading false)))))
@@ -69,7 +63,7 @@
    [:button
     {:on-click (fn []
                  (create-todo {:title (:input-text @app-state)})
-                 (swap! app-state assoc :input-text ""))} ;; Limpa o input
+                 (swap! app-state assoc :input-text ""))}
     "Adicionar"]])
 
 (defn todo-list []
@@ -77,35 +71,26 @@
    (for [todo (:todos @app-state)]
      ^{:key (:todos/id todo)}
      
-     ;; 1. Adicionamos a classe CSS 'completed' se o status for 1
      [:li.todo-item {:class (when (= 1 (:todos/completed todo)) "completed")}
       
-      ;; 2. Adicionamos um Checkbox
       [:input.todo-checkbox
        {:type "checkbox"
-        ;; 3. A CORREÇÃO: Converte 0/1 para booleano real
         :checked (not= 0 (:todos/completed todo))
-        ;; 4. Ligamos o 'on-change' à nossa nova função de API
         :on-change #(toggle-todo (:todos/id todo))}]
         
-      ;; O título (como estava)
       (:todos/title todo)
       
-      ;; Adicionamos um botão de Deletar para futuras extensões (Opcional)
       [:button.delete-btn "X"]
       ])])
 
 (defn app []
   [:div.todo-app
-   [:h1 "Todo App (Somente Frontend)"]
-   [:p "Isto é 100% local. Recarregue (F5) para ver os dados sumirem."]
+   [:h1 "Todo App"]   
    
-   ;; Os componentes agora se viram sozinhos!
    [todo-form]
    [todo-list]
    ])
 
-;; --- 2. A Inicialização (React 18) ---
 (defn ^:export init []
   (println "Frontend 'Todo Estático' inicializado...")
   (let [root (rdom/create-root (js/document.getElementById "app"))]
