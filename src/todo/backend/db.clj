@@ -53,3 +53,15 @@
           ;; :returning "*" faz o SQLite retornar o item inserido
           ] {:returning "*"})]
     result))
+
+(defn toggle-todo!
+  "Alterna o status 'completed' de um todo no banco."
+  [id]
+  ;; (1 - completed) é um truque SQL para inverter 0 -> 1 e 1 -> 0.
+  (jdbc/execute-one! db-spec ["
+    UPDATE todos
+    SET completed = (1 - completed)
+    WHERE id = ?
+    RETURNING *"
+    id
+  ]))

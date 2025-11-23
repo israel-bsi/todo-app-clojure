@@ -46,6 +46,18 @@
       (catch js/Error e
         (swap! app-state assoc :error (.-message e) :loading false)))))
 
+(defn toggle-todo
+  "Chama a API para alternar o status de um todo."
+  [id]
+  (go
+    (try
+      (<p! (fetch-json (str api-url "/todos/" id "/toggle")
+                       {:method "POST"}))
+      ;; Se funcionou, apenas recarregue a lista inteira
+      (get-todos)
+      (catch js/Error e
+        (swap! app-state assoc :error (.-message e) :loading false)))))
+
 (defn todo-form []
   [:div.todo-input
    [:input
@@ -63,9 +75,25 @@
 (defn todo-list []
   [:ul.todo-list
    (for [todo (:todos @app-state)]
-     ^{:key (:todos/id todo)} ;; <-- CORRIGIDO
-     [:li.todo-item
-      (:todos/title todo)])]) ;; <-- CORRIGIDO
+     ^{:key (:todos/id todo)}
+     
+     ;; 1. Adicionamos a classe CSS 'completed' se o status for 1
+     [:li.todo-item {:class (when (= 1 (:todos/completed todo)) "completed")}
+      
+      ;; 2. Adicionamos um Checkbox
+      [:input.todo-checkbox
+       {:type "checkbox"
+        ;; 3. A CORREÇÃO: Converte 0/1 para booleano real
+        :checked (not= 0 (:todos/completed todo))
+        ;; 4. Ligamos o 'on-change' à nossa nova função de API
+        :on-change #(toggle-todo (:todos/id todo))}]
+        
+      ;; O título (como estava)
+      (:todos/title todo)
+      
+      ;; Adicionamos um botão de Deletar para futuras extensões (Opcional)
+      [:button.delete-btn "X"]
+      ])])
 
 (defn app []
   [:div.todo-app

@@ -23,7 +23,10 @@
     
     ["/todos"
      {:get {:handler handler/list-todos-handler}   ;; GET chama 'list'
-      :post {:handler handler/create-todo-handler}}]] ;; POST chama 'create'
+      :post {:handler handler/create-todo-handler}}] ;; POST chama 'create'
+
+    ["/todos/:id/toggle"
+     {:post {:handler handler/toggle-todo-handler}}]]
    ))
 
 (def app
