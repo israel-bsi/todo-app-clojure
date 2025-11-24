@@ -53,3 +53,8 @@
     RETURNING *"
     id
   ]))
+
+(defn delete-todo!
+  "Deleta um todo pelo ID no banco de dados."
+  [id]
+  (jdbc/execute! db-spec ["DELETE FROM todos WHERE id = ?" id]))
